@@ -16,6 +16,18 @@ exports[`changing state in render should fail 2`] = `
 </div>
 `;
 
+exports[`error handling errors should propagate: observer 1`] = `
+Array [
+  [Error: The meaning of life!],
+]
+`;
+
+exports[`error handling errors should propagate: useObserver 1`] = `
+Array [
+  [Error: The meaning of life!],
+]
+`;
+
 exports[`issue 12 init state is correct 1`] = `
 <div>
   <div>

@@ -1,3 +1,4 @@
+import mockConsole from "jest-mock-console"
 import * as mobx from "mobx"
 import * as React from "react"
 import { act, cleanup, fireEvent, render } from "react-testing-library"
@@ -420,14 +421,14 @@ function runTestSuite(mode: "observer" | "useObserver") {
     describe("error handling", () => {
         test("errors should propagate", () => {
             const x = mobx.observable.box(1)
-            let errorsSeen: any[] = []
+            const errorsSeen: any[] = []
 
             class ErrorBoundary extends React.Component {
                 state = {
                     hasError: false
                 }
 
-                componentDidCatch(error: any, info: any) {
+                componentDidCatch(error: any) {
                     errorsSeen.push(error)
                 }
 
@@ -436,18 +437,21 @@ function runTestSuite(mode: "observer" | "useObserver") {
                 }
 
                 render() {
-                    if (this.state.hasError) return <span>Saw error!</span>
+                    if (this.state.hasError) {
+                        return <span>Saw error!</span>
+                    }
                     return this.props.children
                 }
             }
 
             const C = obsComponent(() => {
-                if (x.get() === 42) throw "The meaning of life!"
+                if (x.get() === 42) {
+                    throw new Error("The meaning of life!")
+                }
                 return <span>{x.get()}</span>
             })
 
-            const origErrorLogger = console.error
-            console.error = function() {} // supress printing warnings that React always prints in DEV, even with error boundaries...
+            const restoreConsole = mockConsole()
             try {
                 const rendered = render(
                     <ErrorBoundary>
@@ -458,10 +462,10 @@ function runTestSuite(mode: "observer" | "useObserver") {
                 act(() => {
                     x.set(42)
                 })
-                expect(errorsSeen).toEqual(["The meaning of life!"])
+                expect(errorsSeen).toMatchSnapshot(mode)
                 expect(rendered.container.querySelector("span")!.innerHTML).toBe("Saw error!")
             } finally {
-                console.error = origErrorLogger
+                restoreConsole()
             }
         })
     })
